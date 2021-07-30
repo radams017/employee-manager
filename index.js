@@ -31,7 +31,6 @@ function beginManager() {
                 'Add Role',
                 'View All Departments',
                 'Add Department',
-                'Update Employee',
                 'Quit'
             ]
         }])
