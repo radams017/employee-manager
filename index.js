@@ -64,7 +64,7 @@ function beginManager() {
 
 // VIEW ALL ROLES
 function viewEmployees() {
-    db.query(`SELECT id, first_name, last_name FROM employees`, (err, results) => {
+    db.query(`SELECT * FROM employees`, (err, results) => {
         if (err) throw err;
         console.table(results);
         returnManager();
@@ -122,7 +122,73 @@ function addRole() {
 
             db.query(`INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)`, [response.roleName, response.roleSalary, deptID], (err, results) => {
                 if (err) throw err;
-                console.log('Role Updated')
+                console.log('New Role Succesfully Added')
+                returnManager();
+            });
+        });
+};
+
+function addDepartment() {
+    inquirer
+        .prompt([{
+            type: 'input',
+            name: 'deptName',
+            message: 'What Department Would You Like To Add?'
+        }])
+        .then(response => {
+            db.query(`INSERT INTO departments (dept_name) VALUES (?)`, [response.deptName], (err, results) => {
+                if (err) throw err;
+                console.log('New Department Succesfully Added')
+                returnManager();
+            })
+
+        })
+}
+
+async function addEmployee() {
+
+    let roles = await db.promise().query(`SELECT title FROM roles`);
+    let roleContainer = [];
+    roles[0].forEach(object => {
+        roleContainer.push(object['title'])
+    })
+
+    inquirer
+        .prompt([{
+                type: 'input',
+                name: 'empFirstName',
+                message: 'First Name?'
+            },
+            {
+                type: 'input',
+                name: 'empLastName',
+                message: 'Last Name?'
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: 'Role?',
+                choices: roleContainer
+            },
+            {
+                type: 'list',
+                name: 'manager',
+                message: 'Manager? Select Not Applicable If None',
+                choices: [
+                    'Not Applicable'
+                ]
+            },
+        ])
+        .then(async (response) => {
+
+            let roleID = await db.promise().query(`SELECT id FROM roles WHERE title = "${response.role}"`)
+            roleID[0].forEach(object => {
+                roleID = object["id"]
+            })
+
+            db.query(`INSERT INTO employees (first_name, last_name, role_id) VALUES (?,?,?)`, [response.empFirstName, response.empLastName, roleID], (err, results) => {
+                if (err) throw err;
+                console.log('New Employee Succesfully Added')
                 returnManager();
             });
         });
