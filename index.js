@@ -67,7 +67,10 @@ function beginManager() {
 
 // VIEW ALL ROLES
 function viewEmployees() {
-    db.query(`SELECT * FROM employees`, (err, results) => {
+    db.query(`SELECT employees.id, employees.first_name, employees.last_name, roles.title, 
+    departments.dept_name, roles.salary FROM employees 
+    INNER JOIN roles ON employees.role_id = roles.id
+    INNER JOIN departments ON roles.department_id = departments.id`, (err, results) => {
         if (err) throw err;
         console.table(results);
         returnManager();
@@ -85,7 +88,9 @@ function viewDepartments() {
 
 // VIEW ALL ROLES
 function viewRoles() {
-    db.query(`SELECT * FROM roles`, (err, results) => {
+    db.query(`
+    SELECT roles.id, roles.title, roles.salary, departments.dept_name FROM roles
+    INNER JOIN departments on roles.department_id = departments.id `, (err, results) => {
         if (err) throw err;
         console.table(results);
         returnManager();
@@ -252,6 +257,14 @@ function endManager() {
 function returnManager() {
     beginManager();
 }
+
+// PARSES SEQUELIZE OBJECT INTO ARRAY
+function objectParser(value) {
+    let container = [];
+    value[0].forEach(object => {
+        container.push(object['title'])
+    })
+};
 
 // BEGIN APPLICATION
 beginManager();
