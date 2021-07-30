@@ -1,7 +1,9 @@
+// IMPORT MODULES
 const inquirer = require('inquirer')
 const mysql = require('mysql2')
 const cTable = require('console.table')
 
+// CREATE DB CONNECTION
 const db = mysql.createConnection({
         host: 'localhost',
         // MySQL username,
@@ -29,6 +31,7 @@ function beginManager() {
                 'Add Role',
                 'View All Departments',
                 'Add Department',
+                'Update Employee',
                 'Quit'
             ]
         }])
@@ -41,7 +44,7 @@ function beginManager() {
                     addEmployee();
                     break;
                 case "Update Employee Role":
-                    updateRole();
+                    updateEmployeeRole();
                     break;
                 case "View All Roles":
                     viewRoles();
@@ -89,6 +92,7 @@ function viewRoles() {
     })
 }
 
+// ADD ROLES TO DATABASE
 function addRole() {
     inquirer
         .prompt([{
@@ -128,6 +132,7 @@ function addRole() {
         });
 };
 
+// ADD DEPARTMENT TO DATABASE
 function addDepartment() {
     inquirer
         .prompt([{
@@ -145,6 +150,7 @@ function addDepartment() {
         })
 }
 
+// ADD EMPLOYEE TO DATABASE
 async function addEmployee() {
 
     let roles = await db.promise().query(`SELECT title FROM roles`);
@@ -193,6 +199,49 @@ async function addEmployee() {
             });
         });
 };
+
+// UPDATE EMPLOYEE
+async function updateEmployeeRole() {
+    let employees = await db.promise().query(`SELECT CONCAT (first_name," ",last_name) AS name FROM employees`);
+    let employeeContainer = [];
+    employees[0].forEach(object => {
+        employeeContainer.push(object['name'])
+    });
+
+    let roles = await db.promise().query(`SELECT title FROM roles`);
+    let roleContainer = [];
+    roles[0].forEach(object => {
+        roleContainer.push(object['title'])
+    });
+
+    inquirer
+        .prompt([{
+                type: 'list',
+                name: 'empName',
+                message: 'Select Employee To Update',
+                choices: employeeContainer
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: 'Select New Role to Assign To Employee',
+                choices: roleContainer
+            },
+        ])
+        .then(async (response) => {
+
+            let roleID = await db.promise().query(`SELECT id FROM roles WHERE title = "${response.role}"`)
+            roleID[0].forEach(object => {
+                roleID = object["id"]
+            })
+
+            db.query(`UPDATE employees SET role_id="${roleID}" WHERE CONCAT (first_name," ",last_name)="${response.empName}"`, (err, results) => {
+                if (err) throw err;
+                console.log('Employee Updated')
+                returnManager();
+            });
+        });
+}
 
 // END APPLICATION
 function endManager() {
